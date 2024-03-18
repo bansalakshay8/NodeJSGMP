@@ -12,6 +12,7 @@
     "braces": "^3.0.2",
     "chokidar": "^3.6.0",
     "concat-map": "^0.0.1",
+    "csvtojson": "^2.0.10",
     "debug": "^4.3.4",
     "fill-range": "^7.0.1",
     "fsevents": "^2.3.3",
@@ -39,10 +40,10 @@
     "undefsafe": "^2.0.5",
     "yallist": "^4.0.0"
   },
-  "devDependencies": {},
   "scripts": {
     "task1": "node index.js",
     "task2": "node task2.js",
+    "task3": "node task3.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
