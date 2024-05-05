@@ -1,0 +1,4 @@
+[
+    {"id": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d","title":"The Compound Effect","description":"Darren Hardy","price":"9.48"},
+    {"id": "9b1deb4d-3b7d-4bad-9bdd-4b0d7a3dcb3d","title":"The Compound Effect","description":"Darren Hardy","price":"12.48"}
+]
