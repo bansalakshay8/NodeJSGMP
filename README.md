@@ -1,1 +1,1 @@
-# NodeJSGMP
+# NodeJS GMP

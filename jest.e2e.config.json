@@ -1,0 +1,7 @@
+{
+    "testEnvironment": "node",
+    "roots": [
+        "./e2e"
+    ],
+    "preset": "ts-jest"
+}

@@ -1,0 +1,36 @@
+{
+  "name": "nodejs-gmp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "pm2 start src/module-6/server.ts --interpreter ts-node",
+    "start:nodemon": "nodemon src/module-6/server.ts",
+    "stop": "pm2 stop src/module-6/server.ts",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "jest --config=jest.e2e.config.json"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.3",
+    "pm2": "^5.3.1",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.2"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "body-parser": "^1.20.2",
+    "csvtojson": "^2.0.10",
+    "express": "^4.19.2",
+    "joi": "^17.12.2",
+    "node-fetch": "^2.7.0",
+    "ts-node": "^10.9.2",
+    "uuid": "^9.0.1"
+  }
+}
