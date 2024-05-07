@@ -1,7 +1,7 @@
-import { getUsers } from "../data/user.db.ts";
-import { User } from "../models/user.model.ts";
+import { getUser } from "../data/user.db.ts";
+import { IUser } from "../models/user.model.ts";
 
 export async function findUser(userId: string) {
-    const users = await getUsers() as string;
-    return JSON.parse(users).find((user: User) => user.id === userId);
+    const user: IUser = await getUser(userId);
+    return user;
 }
