@@ -1,88 +1,80 @@
-import { getAllCarts, updateUserCart } from "../data/cart.db.ts";
-import { Cart, CartItem } from "../models/cart.model.ts";
+import { createCart, getCart, updateUserCart } from "../data/cart.db.ts";
+import { ICart, ICartItem } from "../models/cart.model.ts";
 import { v4 as uuidv4 } from 'uuid';
-import { Product } from "../models/product.model.ts";
 import { getProduct } from "./product.service.ts";
-import { Order } from "../models/order.model.ts";
-import { createOrder, getOrders } from "../data/order.db.ts";
+import { createOrder } from "../data/order.db.ts";
+import { IProduct } from "../models/product.model.ts";
 
 export async function findUserCart(userId: string) {
-    const carts: string = await getAllCarts() as string;
-    let userCart: Cart = JSON.parse(carts).find((cart: Cart) => cart.userId === userId);
+    let userCart: ICart = await getCart(userId);
 
-    if(!userCart) {
+    if (!userCart) {
         userCart = {
             id: uuidv4(),
             userId: userId,
             items: [],
             total: 0,
-        }
-        updateUserCart([...JSON.parse(carts), userCart]);
+        } as ICart;
+        userCart = await createCart(userCart);
     }
+
     return userCart;
 }
 
 export async function update(userId: string, reqBody: { productId: string, count: number }) {
     const updateItem: { productId: string, count: number } = reqBody;
-    const cartsJSON: string = await getAllCarts() as string;
-    const carts: Array<Cart> = JSON.parse(cartsJSON);
-    let userCart: Cart = carts.find((cart: Cart) => cart.userId === userId);
-    if(!userCart) {
+    let userCart: ICart = await getCart(userId);
+    if (!userCart) {
         userCart = {
             id: uuidv4(),
             userId: userId,
             items: [],
             total: 0
-        }
-        carts.push(userCart);
+        } as ICart;
+        userCart = await createCart(userCart);
     }
-
-    const cartItemIndex: number = userCart.items.findIndex((cartItem: CartItem) => cartItem.product.id === updateItem.productId);
-    if(cartItemIndex < 0) {
-        const product: Product = await getProduct(updateItem.productId);
-        userCart.items = [...userCart.items, { product: product, count: updateItem.count }];
+    const cartItemIndex: number = userCart.items.findIndex((cartItem) => cartItem.product.id === updateItem.productId);
+    if (cartItemIndex < 0) {
+        const product: IProduct = await getProduct(updateItem.productId);
+        userCart.items = [...userCart.items, { product: product, count: updateItem.count } as ICartItem];
     }
     else {
-        if(!updateItem.count) {
+        if (!updateItem.count) {
             userCart.items.splice(cartItemIndex, 1);
         }
         else {
             userCart.items[cartItemIndex] = {
                 ...userCart.items[cartItemIndex],
                 count: updateItem.count,
-            }
+            } as ICartItem;
         }
     }
     userCart.total = calculateTotal(userCart);
-    updateUserCart([...carts]);
+    await updateUserCart(userCart);
     return userCart;
 }
 
-function calculateTotal(userCart: Cart): number {
-    return userCart.items.reduce((acc: number, item: CartItem) => acc + (item.count * item.product.price), 0);
+function calculateTotal(userCart: ICart): number {
+    return userCart.items.reduce((acc: number, item: ICartItem) => acc + (item.count * item.product.price), 0);
 }
 
 export async function emptyCart(userId: string) {
-    const cartsJSON: string = await getAllCarts() as string;
-    const carts: Array<Cart> = JSON.parse(cartsJSON);
-    let userCart: Cart = carts.find((cart: Cart) => cart.userId === userId);
+    let userCart: ICart = await getCart(userId);
 
-    if(userCart) {
+    if (userCart) {
         userCart.items = [];
         userCart.total = 0;
     }
-    updateUserCart([...carts]);
+    await updateUserCart(userCart);
     return userCart;
 }
 
-export async function order(cart: Cart) {
-    const ordersJSON: string = await getOrders() as string;
-    const orders: Array<Order> = JSON.parse(ordersJSON);
-    orders.push({
+export async function order(cart: ICart) {
+    let newOrder = {
         ...cart,
         id: uuidv4(),
         cartId: cart.id,
-    });
-    await createOrder(orders); 
+    };
+    await createOrder(newOrder);
     await emptyCart(cart.userId);
 }
