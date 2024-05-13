@@ -1,12 +1,12 @@
 import { getProducts, getSingleProduct } from "../data/product.db.ts";
-import { IProduct } from "../models/product.model.ts";
+import { Product } from "../entities/product.entity.ts";
 
 export async function getAllProducts() {
-    const products: Array<IProduct> = await getProducts();
+    const products: Array<Product> = await getProducts();
     return products;
 }
 
 export async function getProduct(productId: string) {
-    const product: IProduct = await getSingleProduct(productId);
+    const product: Product = await getSingleProduct(productId);
     return product;
 }
