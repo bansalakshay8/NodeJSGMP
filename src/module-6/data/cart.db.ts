@@ -1,34 +1,38 @@
 // import fs from 'fs';
-import Cart, { ICart } from '../models/cart.model.ts';
+// import Cart, { ICart } from '../models/cart.model.ts';
+import { Cart, CartItem } from '../entities/cart.entity.ts';
+import { AppDataSource } from '../server_rdbms.ts';
 
 export function getCart(userId: string) {
-    return Cart.findOne({ userId: userId });
+    const cartRepository = AppDataSource.getRepository(Cart);
+    return cartRepository.findOneBy({ user: { id: userId } });
 }
 
-// export function getAllCarts() {
-//     return new Promise((resolve, reject) => {
-//         fs.readFile('src/module-6/db/carts.txt', 'utf8', (err, data) => {
-//             if(err) {
-//                 reject(err);
-//             }
-//             resolve(data);
-//         })
-//     })
-// }
-
-export function updateUserCart(userCart: ICart) {
-    return Cart.updateOne({ userId: userCart.userId }, { items: userCart.items, total: userCart.total });
-
-    // return new Promise((resolve, reject) => {
-    //     fs.writeFile('src/module-6/db/carts.txt', JSON.stringify(newCart), (err) => {
-    //         if(err) {
-    //             reject(err);
-    //         }
-    //         resolve("Cart Updated");
-    //     })
-    // })
+export function getCartItem(cartId: string, productId: string) {
+    const cartItemRepository = AppDataSource.getRepository(CartItem);
+    return cartItemRepository.findOneBy({ cart: { id: cartId }, product: { id: productId } });
 }
 
-export function createCart(userCart: ICart) {
-    return Cart.create(userCart);
+export async function getAllCartProducts(cartId: string) {
+    return await AppDataSource.getRepository(CartItem)
+        .createQueryBuilder('cartItem')
+        .where('cartItem.cart.id = :id', { id: cartId })
+        .leftJoinAndSelect('cartItem.product', 'product')
+        .getMany();
+}
+
+export function updateCartItem(cartItem: CartItem) {
+    const cartItemRepository = AppDataSource.getRepository(CartItem);
+    return cartItemRepository.save(cartItem);
+}
+
+export function updateUserCart(userCart: Cart) {
+    const cartRepository = AppDataSource.getRepository(Cart);
+    return cartRepository.save(userCart);
+}
+
+export async function removeCartItems(cartId: string) {
+    const cartItemRepository = AppDataSource.getRepository(CartItem);
+    const cartItems = await cartItemRepository.findBy({ cart: { id: cartId } });
+    return cartItemRepository.remove(cartItems);
 }

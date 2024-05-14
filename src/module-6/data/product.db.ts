@@ -1,19 +1,13 @@
 // import fs from 'fs';
-import Product from '../models/product.model.ts';
+import { Product } from '../entities/product.entity.ts';
+import { AppDataSource } from '../server_rdbms.ts';
 
 export function getProducts() {
-    // return new Promise((resolve, reject) => {
-    //     fs.readFile('src/module-6/db/products.txt', 'utf8', (err, data) => {
-    //         if (err) {
-    //             reject(err);
-    //         }
-    //         resolve(data);
-    //     })
-    // })
-
-    return Product.find();
+    const productRepository = AppDataSource.getRepository(Product);
+    return productRepository.find();
 }
 
 export function getSingleProduct(productId: string) {
-    return Product.findOne({ id: productId });
+    const productRepository = AppDataSource.getRepository(Product);
+    return productRepository.findOneBy({ id: productId });
 }

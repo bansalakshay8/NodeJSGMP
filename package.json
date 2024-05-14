@@ -6,11 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "pm2 start src/module-6/server.ts --interpreter ts-node",
-    "start:nodemon": "nodemon src/module-6/server.ts",
+    "start:nodemon": "nodemon src/module-6/server_rdbms.ts",
     "stop": "pm2 stop src/module-6/server.ts",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "test:e2e": "jest --config=jest.e2e.config.json"
+    "test:e2e": "jest --config=jest.e2e.config.json",
+    "typeorm": "typeorm-ts-node-esm"
   },
   "author": "",
   "license": "ISC",
@@ -32,7 +33,10 @@
     "joi": "^17.12.2",
     "mongoose": "^8.3.2",
     "node-fetch": "^2.7.0",
+    "pg": "^8.11.5",
+    "reflect-metadata": "^0.2.2",
     "ts-node": "^10.9.2",
+    "typeorm": "^0.3.20",
     "uuid": "^9.0.1"
   }
 }

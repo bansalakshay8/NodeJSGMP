@@ -1,80 +1,57 @@
-import { createCart, getCart, updateUserCart } from "../data/cart.db.ts";
-import { ICart, ICartItem } from "../models/cart.model.ts";
+import { getAllCartProducts, getCart, getCartItem, removeCartItems, updateCartItem, updateUserCart } from "../data/cart.db.ts";
 import { v4 as uuidv4 } from 'uuid';
 import { getProduct } from "./product.service.ts";
+import { Cart, CartItem } from "../entities/cart.entity.ts";
+import { Product } from "../entities/product.entity.ts";
 import { createOrder } from "../data/order.db.ts";
-import { IProduct } from "../models/product.model.ts";
 
 export async function findUserCart(userId: string) {
-    let userCart: ICart = await getCart(userId);
-
-    if (!userCart) {
-        userCart = {
-            id: uuidv4(),
-            userId: userId,
-            items: [],
-            total: 0,
-        } as ICart;
-        userCart = await createCart(userCart);
-    }
-
+    let userCart: Cart = await getCart(userId);
     return userCart;
 }
 
 export async function update(userId: string, reqBody: { productId: string, count: number }) {
     const updateItem: { productId: string, count: number } = reqBody;
-    let userCart: ICart = await getCart(userId);
-    if (!userCart) {
-        userCart = {
-            id: uuidv4(),
-            userId: userId,
-            items: [],
-            total: 0
-        } as ICart;
-        userCart = await createCart(userCart);
-    }
-    const cartItemIndex: number = userCart.items.findIndex((cartItem) => cartItem.product.id === updateItem.productId);
-    if (cartItemIndex < 0) {
-        const product: IProduct = await getProduct(updateItem.productId);
-        userCart.items = [...userCart.items, { product: product, count: updateItem.count } as ICartItem];
+    let userCart: Cart = await getCart(userId);
+    let cartItem: CartItem = await getCartItem(userCart.id, updateItem.productId);
+    if (cartItem) {
+        cartItem.count = updateItem.count;
     }
     else {
-        if (!updateItem.count) {
-            userCart.items.splice(cartItemIndex, 1);
-        }
-        else {
-            userCart.items[cartItemIndex] = {
-                ...userCart.items[cartItemIndex],
-                count: updateItem.count,
-            } as ICartItem;
-        }
+        const product: Product = await getProduct(updateItem.productId);
+        cartItem = new CartItem();
+        cartItem.id = uuidv4();
+        cartItem.product = product;
+        cartItem.count = updateItem.count;
+        cartItem.cart = userCart;
     }
-    userCart.total = calculateTotal(userCart);
-    await updateUserCart(userCart);
+    await updateCartItem(cartItem);
+
+    const cartProducts = await getAllCartProducts(userCart.id);
+    const total = calculateTotal(cartProducts);
+    userCart.total = total;
+    updateUserCart(userCart);
     return userCart;
 }
 
-function calculateTotal(userCart: ICart): number {
-    return userCart.items.reduce((acc: number, item: ICartItem) => acc + (item.count * item.product.price), 0);
+function calculateTotal(cartItems: Array<CartItem>) {
+    return cartItems.reduce((acc: number, item: CartItem) => {
+        return acc + (item.count * item.product.price)
+    }, 0);
 }
 
 export async function emptyCart(userId: string) {
-    let userCart: ICart = await getCart(userId);
+    let userCart: Cart = await getCart(userId);
 
     if (userCart) {
-        userCart.items = [];
+        userCart.cartItem = [];
         userCart.total = 0;
     }
     await updateUserCart(userCart);
+    await removeCartItems(userCart.id);
     return userCart;
 }
 
-export async function order(cart: ICart) {
-    let newOrder = {
-        ...cart,
-        id: uuidv4(),
-        cartId: cart.id,
-    };
-    await createOrder(newOrder);
-    await emptyCart(cart.userId);
+export async function order(cart: Cart) {
+    await createOrder(cart);
 }
