@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "pm2 start src/module-6/server.ts --interpreter ts-node",
+    "start": "nodemon src/module-6/server_rdbms.ts",
     "start:nodemon": "nodemon src/module-6/server_rdbms.ts",
     "stop": "pm2 stop src/module-6/server.ts",
     "test": "jest",
@@ -33,6 +33,7 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "csvtojson": "^2.0.10",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "joi": "^17.12.2",
     "jsonwebtoken": "^9.0.2",
@@ -42,6 +43,7 @@
     "reflect-metadata": "^0.2.2",
     "ts-node": "^10.9.2",
     "typeorm": "^0.3.20",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "winston": "^3.13.0"
   }
 }
