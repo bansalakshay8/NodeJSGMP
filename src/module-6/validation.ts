@@ -1,8 +1,8 @@
 import Joi from "joi";
+import jsonwebtoken from 'jsonwebtoken';
 // import { findUser } from "./services/user.service.ts";
 // import { IUser } from "./models/user.model.ts";
-import { AppDataSource } from "./server_rdbms.ts";
-import { User } from "./entities/user.entity.ts";
+
 
 const productReqBodySchema = Joi.object({
     productId: Joi.string().required(),
@@ -15,21 +15,37 @@ const orderReqBodySchema = Joi.object({
 })
 
 export const userValidation = async (req, res, next) => {
-    const userId = req.get('x-user-id');
-    const userRepository = AppDataSource.getRepository(User);
-    if (!userId) {
-        res.status(403);
-        res.send("You must be authorized user");
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        res.status(401);
+        res.send("Token is required");
         return;
     }
 
-    const user: User = await userRepository.findOneBy({
-        id: userId
-    });
+    const [tokenType, token] = authHeader.split(' ');
 
-    if (!user) {
+    if (tokenType !== 'Bearer') {
+        res.status(403)
+        res.send("Invalid Token");
+        return;
+    }
+    try {
+        const user = jsonwebtoken.verify(token, "key");
+        req.user = user;
+    }
+    catch (err) {
         res.status(401);
-        res.send("User is not authorized");
+        res.send("Invalid Token");
+        return;
+    }
+    next();
+}
+
+export const adminValidation = (req, res, next) => {
+    if (req.user.role !== 'Admin') {
+        res.status(403);
+        res.send("Forbidden");
         return;
     }
     next();
