@@ -5,18 +5,35 @@ import { Cart, CartItem } from "./entities/cart.entity.ts";
 import { Order } from "./entities/order.entity.ts";
 import express from 'express';
 import bodyParser from "body-parser";
-import { adminValidation, userValidation } from "./validation.ts";
+import { userValidation } from "./validation.ts";
 import { CartRoutes } from "./routes/cart.route.ts";
 import { ProductRoutes } from "./routes/product.route.ts";
 import { AuthRoutes } from "./routes/auth.route.ts";
+import dotenv from "dotenv";
+import winston from "winston";
+
+const config = dotenv.config();
+
+const customFormat = winston.format.printf(({ level, message, timestamp }) => {
+    return `[${timestamp}] ${level.toUpperCase()} ${message}`;
+});
+
+export const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(winston.format.timestamp(), customFormat),
+    transports: [
+        new winston.transports.File({ filename: 'src/module-6/logs/error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'src/module-6/logs/combined.log' }),
+    ],
+});
 
 export const AppDataSource: DataSource = new DataSource({
     type: "postgres",
-    host: "localhost",
-    port: 5430,
-    username: "node_gmp",
-    password: "password123",
-    database: "node_gmp",
+    host: process.env.DB_HOST,
+    port: +process.env.DB_PORT,
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
     synchronize: true,
     logging: true,
     entities: [User, Product, Cart, Order, CartItem],
@@ -40,15 +57,50 @@ AppDataSource.initialize()
         product2.description = 'Darren Hardy';
         product2.price = 12;
         await productRepository.save(product2);
-    }).catch(err => console.log(err));
+    }).catch(err => logger.error(err));
 
 const app = express();
 const jsonParser = bodyParser.json();
 
+app.get('/health', (req, res) => {
+    logger.info('GET /health');
+    res.status(200);
+    res.send("Application is healthy");
+})
 app.use('/api/auth/', jsonParser, AuthRoutes);
 app.use('/api/profile/cart/', userValidation, jsonParser, CartRoutes);
 app.use('/api/products/', userValidation, ProductRoutes);
 
-app.listen(8000, () => {
-    console.log('Server start');
+const server = app.listen(process.env.PORT, () => {
+    logger.info(`Server started on Port - ${process.env.PORT}`);
 });
+
+let connections = [];
+
+server.on('connection', (connection) => {
+    connections.push(connection);
+    connection.on('close', () => {
+        connections = connections.filter((currentConnection) => currentConnection !== connection);
+    });
+});
+
+function shutdown() {
+    console.log('Received kill signal, shutting down gracefully');
+
+    server.close(() => {
+        console.log('Closed out remaining connections');
+        process.exit(0);
+    });
+
+    setTimeout(() => {
+        console.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+    }, 20000);
+    connections.forEach((connection) => connection.end());
+    setTimeout(() => {
+        connections.forEach((connection) => connection.destroy());
+    }, 100);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
